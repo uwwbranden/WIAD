@@ -20,7 +20,10 @@
       const { PDFDocument } = PDFLib;
 
       // Get the ID numbers from the textarea
-      const idNumbers = document.getElementById('idNumbers').value.trim().split('\n').map(id => id.trim());
+      const idNumbers = document.getElementById('idNumbers').value
+        .trim()
+        .split('\n')
+        .map(id => id.trim().padStart(4, '0'));
 
       if (idNumbers.length === 0) {
         alert('Please enter at least one ID number.');
