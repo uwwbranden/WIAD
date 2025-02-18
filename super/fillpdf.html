@@ -1,0 +1,138 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://unpkg.com/pdf-lib@1.11.0"></script>
+    <script src="https://unpkg.com/downloadjs@1.4.7"></script>
+  </head>
+
+  <body>
+    <h1>WIAD - Zipgrade ID Filler</h1>
+	<h2>SuperQuiz</h2>
+    <p>Paste students below (one per line):</p>
+	<p>Format:<br />Name ID Category<br/>ex: <i>John Doe 1234 H1</i></p>
+    <textarea id="idNumbers" rows="10" cols="30" placeholder="Enter IDs here...">
+John Doe 4502 H1
+Sue Smith 4503 H2
+Tracey Blue 3908 H3
+
+Fred Flinstone 2309 S1
+Tom Jones 3200 S2
+Edith Schmidt 3402 S3
+
+Arthur Popp 2111 V1
+Greta Grace 4646 V2
+Stacy Smothers 4500 V3
+
+	</textarea>
+    <br><br>
+    <button onclick="createPdf([['0945', ' ', '0022x1.pdf']])">Generate PDF</button>
+    <p class="small">(Your browser will download the resulting file)</p>
+  </body>
+
+<script>
+let test = false;
+let sheetIndex = ["H1", "H2", "H3", "S1", "S2", "S3", "V1", "V2", "V3"];
+let sheets = ["0022x1.pdf","0036x1.pdf","0496x1.pdf","2507x1.pdf","3046x1.pdf","3674x1.pdf","3774x1.pdf","4961x1.pdf","9508x1.pdf"];
+
+const testStudentData = [
+  ["4500", "Stacy Smothers", "9508x1.pdf"],
+  ["4501", "John Doe", "4961x1.pdf"],
+  ["4502", "Jane Smith", "9508x1.pdf"],  // Different template possible
+  // ... more students
+];
+
+function processText() {
+	let input = document.getElementById('idNumbers');
+    // Split the input into lines
+    let lines = input.value.trim().split("\n");
+	
+	// Remove blank lines (or lines with only whitespace)
+	lines = lines.filter(line => line.trim() !== ""); // Keep only non-empty lines
+    
+    // Parse lines into an array [name, id, sheetIndex]
+    let entries = lines.map(line => {
+        let parts = line.trim().split(" ");
+        let id = parts[parts.length - 2]; // Second to last part is the ID
+        let category = parts[parts.length - 1]; // Last part is the category
+        let name = parts.slice(0, parts.length - 2).join(" "); // Everything before ID
+		return [id, name, sheets[sheetIndex.indexOf(category)]];
+    });
+    console.log(entries);
+    return entries;
+}
+
+async function createPdf(studentData) {  // studentData is now an array of objects
+  const { PDFDocument, rgb } = PDFLib;
+  //studentData = testStudentData;
+  studentData = processText();
+
+  if (studentData.length === 0) {
+    alert('No student data provided.');
+    return;
+  }
+
+  try {
+    const newPdfDoc = await PDFDocument.create();
+
+    for (const student of studentData) {
+      const studentId = student[0]; // Access student ID
+      //const studentName = student[1]; // Access student Name
+      const templateFile = student[2]; // Access template file
+
+      const inputPdfBytes = await fetch(templateFile).then(res => res.arrayBuffer());
+      const pdfDoc = await PDFDocument.load(inputPdfBytes);
+      const [copiedPage] = await newPdfDoc.copyPages(pdfDoc, [0]);
+      newPdfDoc.addPage(copiedPage);
+
+      const page = newPdfDoc.getPage(newPdfDoc.getPageCount() - 1);
+
+      // Draw grid for testing (if needed)
+      if (test) {
+        const { width, height } = page.getSize();
+        for (let x = 0; x < width; x += 50) {
+          page.drawLine({ start: { x, y: 0 }, end: { x, y: height }, color: rgb(0.8, 0.8, 0.8) });
+          page.drawText(x + "", { x: x, y: 0, size: 10 });
+        }
+        for (let y = 0; y < height; y += 50) {
+          page.drawLine({ start: { x: 0, y }, end: { x: width, y }, color: rgb(0.8, 0.8, 0.8) });
+          page.drawText(y + "", { x: 0, y: y, size: 10 });
+        }
+      }
+
+      // Add student data to the page
+      page.drawText(studentId, { x: 230, y: 525, size: 12 });
+      //page.drawText(studentName, { x: 100, y: 550, size: 12 }); // Example for student name
+
+      // Fill squares for the ID
+      const xBase = 340, yBase = 445;
+      for (let i = 0; i < studentId.length; i++) {
+        page.drawText(studentId[i], { x: xBase + i * 15, y: yBase, size: 12 });
+      }
+
+      // Fill bubbles for the ID
+      const bubbleXBase = 342, bubbleYBase = 432, bubbleRadius = 6;
+      for (let i = 0; i < studentId.length; i++) {
+        const digit = parseInt(studentId[i], 10);
+        page.drawCircle({
+          x: bubbleXBase + i * 15,
+          y: bubbleYBase - digit * 18,
+          size: bubbleRadius,
+        });
+      }
+    }
+
+    const pdfBytes = await newPdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `filled_report.pdf`; // Single filename
+    link.click();
+
+  } catch (error) {
+    console.error('Error creating PDF:', error);
+    alert('An error occurred while generating the PDF.');
+  }
+}
+</script>
+</html>
