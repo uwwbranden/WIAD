@@ -9,20 +9,17 @@
     <h1>WIAD - Zipgrade ID Filler</h1>
 	<h2>SuperQuiz</h2>
     <p>Paste students below (one per line):</p>
-	<p>Format:<br />Name ID Category<br/>ex: <i>John Doe 1234 H1</i></p>
+	<p>Format: <b>ID Category</b><br/>ex: <i>1234 H1</i></p>
     <textarea id="idNumbers" rows="10" cols="30" placeholder="Enter IDs here...">
-John Doe 4502 H1
-Sue Smith 4503 H2
-Tracey Blue 3908 H3
-
-Fred Flinstone 2309 S1
-Tom Jones 3200 S2
-Edith Schmidt 3402 S3
-
-Arthur Popp 2111 V1
-Greta Grace 4646 V2
-Stacy Smothers 4500 V3
-
+4502 H1
+4503 H2
+3908 H3
+2309 S1
+3200 S2
+3402 S3
+2111 V1
+4646 V2
+4500 V3
 	</textarea>
     <br><br>
     <button onclick="createPdf([['0945', ' ', '0022x1.pdf']])">Generate PDF</button>
@@ -32,7 +29,9 @@ Stacy Smothers 4500 V3
 <script>
 let test = false;
 let sheetIndex = ["H1", "H2", "H3", "S1", "S2", "S3", "V1", "V2", "V3"];
-let sheets = ["0022x1.pdf","0036x1.pdf","0496x1.pdf","2507x1.pdf","3046x1.pdf","3674x1.pdf","3774x1.pdf","4961x1.pdf","9508x1.pdf"];
+//let sheets = ["0022x1.pdf","0036x1.pdf","0496x1.pdf","2507x1.pdf","3046x1.pdf","3674x1.pdf","3774x1.pdf","4961x1.pdf","9508x1.pdf"];
+let sheets = ["2507x1.pdf", "0022x1.pdf", "3046x1.pdf", "0036x1.pdf", "9508x1.pdf", "4961x1.pdf", "0496x1.pdf", "3674x1.pdf", "3774x1.pdf"];
+
 
 const testStudentData = [
   ["4500", "Stacy Smothers", "9508x1.pdf"],
