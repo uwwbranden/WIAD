@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZipGrade CSV Column Mapper</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        input {
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>ZipGrade CSV Processor</h2>
+        <p>Upload a ZipGrade CSV file to map columns and download the result.</p>
+
+        <input type="file" id="csvFile" accept=".csv">
+        <br>
+        <button onclick="processCSV()">Process & Download</button>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function processCSV() {
+            const fileInput = document.getElementById('csvFile');
+            const status = document.getElementById('status');
+
+            if (!fileInput.files[0]) {
+                status.innerText = "Please select a file first.";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const text = e.target.result;
+                // Split text by lines and filter out empty lines
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+
+                // 1. Remove first row (headers)
+                const dataRows = lines.slice(1);
+
+                if (dataRows.length === 0) {
+                    status.innerText = "Error: No data rows found.";
+                    return;
+                }
+
+                // Automated Document Type Detection (from first column of first record)
+                const firstRecordCols = dataRows[0].split(',');
+                const firstColVal = firstRecordCols[0] || "";
+                let docType = "I"; // Default
+                if (firstColVal.includes("Speech")) {
+                    docType = "S";
+                } else if (firstColVal.includes("Interview")) {
+                    docType = "I";
+                }
+
+                const filename = (docType === "S") ? "speech_processed.csv" : "interview_processed.csv";
+
+                const resultRows = dataRows.map((line, index) => {
+                    // Basic CSV split (comma-separated)
+                    // Note: For complex CSVs with quotes/commas inside cells, a library like PapaParse is better.
+                    const cols = line.split(',');
+
+                    // Mapping Helper (Converts 'A' -> 0, 'B' -> 1, etc.)
+                    const getCol = (colLetter) => {
+                        let column = 0;
+                        for (let i = 0; i < colLetter.length; i++) {
+                            column = column * 26 + (colLetter.charCodeAt(i) - 64);
+                        }
+                        let val = cols[column - 1] || "";
+                        return val.trim();
+                    };
+
+                    const processVal = (val) => {
+                        return (val.toUpperCase() === "T") ? "10" : val;
+                    };
+
+                    // Mapping Logic
+                    const row = [
+                        docType,                               // A: I or S
+                        getCol("E").padStart(4, '0'),          // B: E (4-digit padded)
+                        "",                                    // C: Blank
+                        (index % 2 === 0) ? "1" : "2",         // D: Alt 1 and 2
+                        processVal(getCol("M")),               // E: M
+                        processVal(getCol("Q")),               // F: Q
+                        processVal(getCol("U")),               // G: U
+                        processVal(getCol("Y")),               // H: Y
+                        processVal(getCol("AC")),              // I: AC
+                        processVal(getCol("AG")),              // J: AG
+                        processVal(getCol("AK")),              // K: AK
+                        processVal(getCol("AO")),              // L: AO
+                        processVal(getCol("AS")),              // M: AS
+                        processVal(getCol("AW"))               // N: AW
+                    ];
+
+                    return row.join(',');
+                });
+
+                downloadCSV(resultRows.join('\n'), filename);
+                status.innerText = "Success! File downloaded.";
+            };
+
+            reader.readAsText(file);
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+
+</body>
+
+</html>
