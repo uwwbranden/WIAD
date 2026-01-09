@@ -133,9 +133,9 @@
                         processVal(getCol("AW"))               // N: AW
                     ];
 
-                    // If Speech, add one more column from BA
+                    // If Speech, add one more column from BC
                     if (docType === "S") {
-                        row.push(processVal(getCol("BA")));    // O: BA
+                        row.push(processVal(getCol("BC")));    // O: BC
                     }
 
                     return row.join(',');
