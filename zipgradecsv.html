@@ -133,6 +133,11 @@
                         processVal(getCol("AW"))               // N: AW
                     ];
 
+                    // If Speech, add one more column from BA
+                    if (docType === "S") {
+                        row.push(processVal(getCol("BA")));    // O: BA
+                    }
+
                     return row.join(',');
                 });
 
@@ -157,6 +162,5 @@
     </script>
 
 </body>
-
 
 </html>
