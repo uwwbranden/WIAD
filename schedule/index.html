@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD Sched | Academic Decathlon Scheduler</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <header class="content-header">
+                <div class="logo-area">
+                    <h1>AD<span>Sched</span></h1>
+                </div>
+                <div class="main-nav">
+                    <button class="nav-btn active" data-tab="schedule">Schedule</button>
+                    <button class="nav-btn" data-tab="setup">Data Setup</button>
+                    <button class="nav-btn" data-tab="settings">Settings</button>
+                </div>
+
+                <div class="header-actions" id="scheduleActions">
+                    <button id="generateBtn" class="primary-btn"
+                        style="margin: 0; padding: 0.5rem 1.25rem; font-size: 0.875rem; width: auto;">⚡ Generate
+                        Schedule</button>
+                    <div class="status-badge" id="finishStatus">Ready to generate</div>
+                    <button id="printBtn" class="toggle-btn" style="margin-left: 1rem;">Print Schedule</button>
+                    <div class="view-toggles" style="margin-left: 1rem;">
+                        <button class="toggle-btn active" data-view="room">Room View</button>
+                        <button class="toggle-btn" data-view="student">Student View</button>
+                    </div>
+                </div>
+            </header>
+
+            <style>
+                @media print {
+
+                    .logo-area,
+                    .main-nav,
+                    .header-actions,
+                    .settings-card,
+                    #settingsTab,
+                    .student-cat {
+                        display: none !important;
+                    }
+
+                    .main-content {
+                        padding: 0 !important;
+                    }
+
+                    .app-container {
+                        display: block !important;
+                    }
+
+                    .room-card {
+                        break-inside: avoid;
+                        border: 1px solid #ddd !important;
+                        box-shadow: none !important;
+                    }
+
+                    .slot-group {
+                        break-inside: avoid;
+                    }
+
+                    .schedule-table-wrapper {
+                        box-shadow: none !important;
+                        border: 1px solid #ddd !important;
+                    }
+                }
+            </style>
+
+            <!-- Schedule View -->
+            <div id="scheduleTab" class="tab-content active">
+                <div id="scheduleOutput" class="schedule-grid">
+                    <div class="empty-state">
+                        <p>Enter configuration and click "Generate Schedule" to begin.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Setup View -->
+            <div id="setupTab" class="tab-content">
+                <div class="setup-grid">
+                    <div class="setup-column">
+                        <div class="setup-header">
+                            <h3>Schools</h3>
+                            <div class="setup-actions">
+                                <button class="import-btn" onclick="openImport('schools')"
+                                    title="Import Schools">Import</button>
+                                <button id="addSchoolBtn" class="icon-btn" title="Add School">+</button>
+                            </div>
+                        </div>
+                        <div id="schoolList" class="data-list"></div>
+                    </div>
+
+                    <div class="setup-column">
+                        <div class="setup-header">
+                            <h3>Rooms</h3>
+                            <div class="setup-actions">
+                                <button class="import-btn" onclick="openImport('rooms')"
+                                    title="Import Rooms">Import</button>
+                                <button id="addRoomBtn" class="icon-btn" title="Add Room">+</button>
+                            </div>
+                        </div>
+                        <div id="roomList" class="data-list"></div>
+                    </div>
+
+                    <div class="setup-column">
+                        <div class="setup-header">
+                            <h3>Students</h3>
+                            <div class="setup-actions">
+                                <button class="import-btn" onclick="openImport('students')"
+                                    title="Import Students">Import</button>
+                                <button id="addStudentBtn" class="icon-btn" title="Add Student">+</button>
+                            </div>
+                        </div>
+                        <div id="studentList" class="data-list"></div>
+                    </div>
+
+                    <div class="setup-column">
+                        <div class="setup-header">
+                            <h3>Judges</h3>
+                            <div class="setup-actions">
+                                <button class="import-btn" onclick="openImport('judges')"
+                                    title="Import Judges">Import</button>
+                                <button id="addJudgeBtn" class="icon-btn" title="Add Judge">+</button>
+                            </div>
+                        </div>
+                        <div id="judgeList" class="data-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsTab" class="tab-content">
+                <div class="settings-grid">
+                    <div class="settings-card card-animate">
+                        <h3>Timing & Durations</h3>
+                        <div class="settings-row">
+                            <div class="input-group">
+                                <label for="eventTime">Competition Duration (min)</label>
+                                <input type="number" id="eventTime" value="10" min="1">
+                            </div>
+                            <div class="input-group">
+                                <label for="transitionTime">Passing Time / Gap (min)</label>
+                                <input type="number" id="transitionTime" value="5" min="0">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="minBreak">Min. Gap Between Student Events (min)</label>
+                            <input type="number" id="minBreak" value="30" min="0">
+                        </div>
+                        <div class="input-group">
+                            <label for="startTime">Day Start Time</label>
+                            <input type="time" id="startTime" value="10:00">
+                        </div>
+                    </div>
+
+                    <div class="settings-card card-animate">
+                        <h3>Global Break</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">A time period
+                            where all competition stops (e.g. Lunch or General Session).</p>
+                        <div class="settings-row">
+                            <div class="input-group">
+                                <label for="breakStart">Break Start</label>
+                                <input type="time" id="breakStart" value="11:10">
+                            </div>
+                            <div class="input-group">
+                                <label for="breakEnd">Break End</label>
+                                <input type="time" id="breakEnd" value="11:30">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card card-animate">
+                        <h3>Scheduling Guardrails</h3>
+                        <div class="input-group">
+                            <label for="schoolLimit">Max Students from Same School per Slot</label>
+                            <input type="number" id="schoolLimit" value="3" min="1">
+                        </div>
+                        <div class="input-group"
+                            style="display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem;">
+                            <input type="checkbox" id="noBackToBack" style="width: auto" checked>
+                            <label for="noBackToBack"
+                                style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Prevent Back-to-Back
+                                Teammates in Same Room</label>
+                        </div>
+                    </div>
+
+                    <div class="settings-card card-animate"
+                        style="border: 1px dashed var(--primary); display: flex; flex-direction: column; gap: 1rem; align-items: center; justify-content: center; background: rgba(99, 102, 241, 0.05);">
+                        <h3 style="border: none; margin-bottom: 0;">Backup & Portable Data</h3>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">Export all
+                            settings, schools, rooms, and students to a single file for sharing or backup.</p>
+                        <div style="display: flex; gap: 1rem; width: 100%;">
+                            <button id="exportStateBtn" class="toggle-btn"
+                                style="flex: 1; border: 1px solid var(--primary); color: var(--primary);">📥 Export
+                                Everything</button>
+                            <button id="importStateBtn" class="toggle-btn"
+                                style="flex: 1; border: 1px solid var(--primary); color: var(--primary);">📤 Import
+                                Everything</button>
+                        </div>
+                        <input type="file" id="stateFileInput" accept=".json" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="modal-overlay">
+        <div class="modal-content animate-in">
+            <div class="modal-header">
+                <h2 id="importTitle">Import Data</h2>
+                <button class="close-btn" onclick="closeImport()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="importInstructions">Paste your CSV/TSV data below or upload a file.</p>
+
+                <div class="input-group">
+                    <label>CSV File</label>
+                    <input type="file" id="csvFileInput" accept=".csv,.tsv,.txt">
+                </div>
+
+                <div class="input-group">
+                    <label>Or Paste Data (TSV/CSV)</label>
+                    <textarea id="importTextarea" rows="8" placeholder="Header1, Header2..."></textarea>
+                </div>
+
+                <div class="import-options">
+                    <label>
+                        <input type="radio" name="importMode" value="append" checked> Append to existing
+                    </label>
+                    <label>
+                        <input type="radio" name="importMode" value="overwrite"> Clear and overwrite
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="toggle-btn" onclick="closeImport()">Cancel</button>
+                <button id="processImportBtn" class="primary-btn"
+                    style="margin-top:0; width:auto; padding: 0.5rem 2rem;">Process Import</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
